@@ -1,0 +1,4 @@
+interface:
+  display_name: "Case Writer"
+  short_description: "Draft teaching cases and notes from background materials."
+  default_prompt: "Use $case-writer to write a finance-focused business teaching case from the background folder."

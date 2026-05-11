@@ -1,0 +1,144 @@
+"""Render a UTF-8 text or Markdown-like draft to PDF.
+
+This script intentionally supports only lightweight Markdown conventions. It is
+for final case deliverables, not full publishing-grade layout.
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+import zipfile
+from pathlib import Path
+from xml.etree import ElementTree
+
+
+PAGE_WIDTH = 595
+PAGE_HEIGHT = 842
+MARGIN_X = 54
+MARGIN_Y = 54
+FONT_SIZE = 11
+LINE_HEIGHT = 17
+
+
+def find_default_font() -> str | None:
+    candidates = [
+        Path("C:/Windows/Fonts/msyh.ttc"),
+        Path("C:/Windows/Fonts/simsun.ttc"),
+        Path("C:/Windows/Fonts/simhei.ttf"),
+        Path("/System/Library/Fonts/PingFang.ttc"),
+        Path("/System/Library/Fonts/Supplemental/Arial Unicode.ttf"),
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+        Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+    return None
+
+
+def normalize_markdown(text: str) -> str:
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def extract_docx(path: Path) -> str:
+    namespace = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    with zipfile.ZipFile(path) as archive:
+        with archive.open("word/document.xml") as document_xml:
+            root = ElementTree.parse(document_xml).getroot()
+
+    paragraphs: list[str] = []
+    for paragraph in root.findall(".//w:p", namespace):
+        text_parts = [node.text or "" for node in paragraph.findall(".//w:t", namespace)]
+        text = "".join(text_parts).strip()
+        if text:
+            paragraphs.append(text)
+    return "\n".join(paragraphs)
+
+
+def split_wrapped_lines(text: str, max_units: int = 46) -> list[str]:
+    lines: list[str] = []
+    for paragraph in text.split("\n"):
+        if not paragraph.strip():
+            lines.append("")
+            continue
+
+        current = ""
+        current_units = 0
+        for char in paragraph.strip():
+            units = 2 if ord(char) > 127 else 1
+            if current and current_units + units > max_units:
+                lines.append(current)
+                current = char
+                current_units = units
+            else:
+                current += char
+                current_units += units
+        if current:
+            lines.append(current)
+    return lines
+
+
+def write_pdf(source: Path, destination: Path, font_path: str | None) -> None:
+    try:
+        import fitz
+    except ImportError as exc:
+        raise RuntimeError("PyMuPDF is required. Run scripts/check_dependencies.py.") from exc
+
+    if source.suffix.lower() == ".docx":
+        text = extract_docx(source)
+    else:
+        text = source.read_text(encoding="utf-8")
+    
+    text = normalize_markdown(text)
+    lines = split_wrapped_lines(text)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    document = fitz.open()
+    page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+    y = MARGIN_Y
+
+    for line in lines:
+        if y > PAGE_HEIGHT - MARGIN_Y:
+            page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+            y = MARGIN_Y
+
+        if line:
+            page.insert_text(
+                (MARGIN_X, y),
+                line,
+                fontsize=FONT_SIZE,
+                fontname="casefont" if font_path else "helv",
+                fontfile=font_path,
+            )
+        y += LINE_HEIGHT
+
+    document.save(destination)
+    document.close()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Render a UTF-8 text/Markdown-like file to PDF.")
+    parser.add_argument("source", type=Path, help="Source .txt or .md file.")
+    parser.add_argument("destination", type=Path, help="Destination .pdf file.")
+    parser.add_argument("--font", type=Path, help="Optional font file path, recommended for Chinese text.")
+    parser.add_argument("--delete-source", action="store_true", help="Delete the source draft after PDF creation.")
+    args = parser.parse_args()
+
+    font_path = str(args.font) if args.font else find_default_font()
+    write_pdf(args.source, args.destination, font_path)
+
+    if args.delete_source:
+        args.source.unlink()
+
+    print(f"Wrote {args.destination}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

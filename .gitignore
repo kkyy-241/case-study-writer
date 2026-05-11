@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Generated intermediate products
+artifacts/
+generated/
+outputs/*
+!outputs/.gitkeep
+*.tmp
+
+# Supporting documents (examples and methodology)
+supporting_documents/examples/
+supporting_documents/methodology/
+
+# Local IDE/user state
+.vscode/*
+!.vscode/settings.json
+
+# OS files
+.DS_Store
+Thumbs.db

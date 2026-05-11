@@ -1,0 +1,6 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.defaultPackageManager": "ms-python.python:pip",
+    "python.defaultInterpreterPath": "D:\\anaconda3\\envs\\python313\\python.exe",
+    "python.terminal.activateEnvironment": true
+}

@@ -1,7 +1,9 @@
 """Render a DOCX, UTF-8 text, or Markdown-like draft to PDF.
 
-For DOCX inputs, the default backend first tries Microsoft Word COM on Windows,
-then LibreOffice, then a lightweight PyMuPDF text renderer.
+For style fidelity, final deliverables should use DOCX input and the Word or
+LibreOffice backend. For DOCX inputs, the default backend first tries Microsoft
+Word COM on Windows, then LibreOffice, then a lightweight PyMuPDF text renderer.
+Text input is an emergency fallback and will not fully match DOCX layout.
 """
 
 from __future__ import annotations
@@ -19,11 +21,15 @@ from xml.etree import ElementTree
 
 PAGE_WIDTH = 595
 PAGE_HEIGHT = 842
-MARGIN_X = 54
-MARGIN_Y = 54
-FONT_SIZE = 11
-LINE_HEIGHT = 17
+MARGIN_X = 90
+MARGIN_Y = 76
+HEADER_Y = 51
+FOOTER_Y = 790
+FONT_SIZE = 12
+HEADER_FONT_SIZE = 9
+LINE_HEIGHT = 20
 IMAGE_PATTERN = re.compile(r"^!\[(?P<alt>[^\]]*)\]\((?P<path>[^)]+)\)$")
+HEADER_LEFT_TEXT = "商学院教学案例库"
 
 SOFFICE_CANDIDATES = [
     "soffice",
@@ -77,7 +83,7 @@ def extract_docx(path: Path) -> str:
     return "\n".join(paragraphs)
 
 
-def split_wrapped_lines(text: str, max_units: int = 46) -> list[str]:
+def split_wrapped_lines(text: str, max_units: int = 68) -> list[str]:
     lines: list[str] = []
     for paragraph in text.split("\n"):
         if not paragraph.strip():
@@ -176,6 +182,90 @@ def insert_text_line(page, line: str, y: float, font_path: str | None) -> None:
     )
 
 
+def insert_centered_text(page, text: str, y: float, fontsize: int, font_path: str | None) -> None:
+    text_width = fitz_text_width(text, fontsize)
+    page.insert_text(
+        ((PAGE_WIDTH - text_width) / 2, y),
+        text,
+        fontsize=fontsize,
+        fontname="casefont" if font_path else "helv",
+        fontfile=font_path,
+    )
+
+
+def fitz_text_width(text: str, fontsize: int) -> float:
+    units = sum(2 if ord(char) > 127 else 1 for char in text)
+    return units * fontsize * 0.5
+
+
+def infer_document_kind(source: Path, text: str) -> str:
+    joined = f"{source.name} {text[:80]}"
+    if "使用说明" in joined or "teaching" in joined.lower() or "note" in joined.lower():
+        return "案例使用说明"
+    return "案例正文"
+
+
+def infer_company_suffix(*paths: Path) -> str:
+    for path in paths:
+        stem = path.stem
+        for prefix in ("案例正文_", "案例使用说明_"):
+            if stem.startswith(prefix):
+                suffix = stem[len(prefix) :].strip()
+                if suffix:
+                    return suffix
+    return ""
+
+
+def heading_text(raw_line: str) -> str | None:
+    match = re.match(r"^#{1,6}\s+(.+)$", raw_line.strip())
+    if match:
+        return normalize_markdown(match.group(1)).strip()
+    return None
+
+
+def insert_template_title(page, title: str, kind: str, font_path: str | None) -> float:
+    page.insert_text(
+        (MARGIN_X, 99),
+        f"{kind}：",
+        fontsize=15,
+        fontname="casefont" if font_path else "helv",
+        fontfile=font_path,
+    )
+    insert_centered_text(page, title, 134, 16, font_path)
+    return 194
+
+
+def new_template_page(document, font_path: str | None, company_suffix: str = ""):
+    page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+    page_number = document.page_count
+    page.insert_text(
+        (MARGIN_X, HEADER_Y),
+        HEADER_LEFT_TEXT,
+        fontsize=HEADER_FONT_SIZE,
+        fontname="casefont" if font_path else "helv",
+        fontfile=font_path,
+    )
+    if company_suffix:
+        right_width = fitz_text_width(company_suffix, HEADER_FONT_SIZE)
+        page.insert_text(
+            (PAGE_WIDTH - MARGIN_X - right_width, HEADER_Y),
+            company_suffix,
+            fontsize=HEADER_FONT_SIZE,
+            fontname="casefont" if font_path else "helv",
+            fontfile=font_path,
+        )
+    footer_text = str(page_number)
+    footer_width = len(footer_text) * HEADER_FONT_SIZE * 0.5
+    page.insert_text(
+        ((PAGE_WIDTH - footer_width) / 2, FOOTER_Y),
+        footer_text,
+        fontsize=HEADER_FONT_SIZE,
+        fontname="casefont" if font_path else "helv",
+        fontfile=font_path,
+    )
+    return page
+
+
 def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | None) -> None:
     try:
         import fitz
@@ -185,16 +275,25 @@ def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | Non
     if source.suffix.lower() == ".docx":
         text = extract_docx(source)
     else:
-        text = source.read_text(encoding="utf-8")
+        text = source.read_text(encoding="utf-8-sig")
     
     text = text.replace("\r\n", "\n").replace("\r", "\n")
+    kind = infer_document_kind(source, text)
+    company_suffix = infer_company_suffix(destination, source)
+    title_written = False
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     document = fitz.open()
-    page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+    page = new_template_page(document, font_path, company_suffix)
     y = MARGIN_Y
 
     for raw_line in text.split("\n"):
+        first_heading = heading_text(raw_line)
+        if first_heading and not title_written:
+            y = insert_template_title(page, first_heading, kind, font_path)
+            title_written = True
+            continue
+
         image_match = IMAGE_PATTERN.match(raw_line.strip())
         if image_match and source.suffix.lower() != ".docx":
             image_path = Path(image_match.group("path"))
@@ -206,7 +305,7 @@ def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | Non
                 width = PAGE_WIDTH - 2 * MARGIN_X
                 height = width * image_page.rect.height / image_page.rect.width
                 if y + height > PAGE_HEIGHT - MARGIN_Y:
-                    page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+                    page = new_template_page(document, font_path, company_suffix)
                     y = MARGIN_Y
                 rect = fitz.Rect(MARGIN_X, y, MARGIN_X + width, y + height)
                 page.insert_image(rect, filename=str(image_path))
@@ -215,7 +314,7 @@ def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | Non
                 if alt:
                     for caption_line in split_wrapped_lines(alt, max_units=46):
                         if y > PAGE_HEIGHT - MARGIN_Y:
-                            page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+                            page = new_template_page(document, font_path, company_suffix)
                             y = MARGIN_Y
                         insert_text_line(page, caption_line, y, font_path)
                         y += LINE_HEIGHT
@@ -224,7 +323,7 @@ def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | Non
 
         for line in split_wrapped_lines(normalize_markdown(raw_line), max_units=46):
             if y > PAGE_HEIGHT - MARGIN_Y:
-                page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+                page = new_template_page(document, font_path, company_suffix)
                 y = MARGIN_Y
 
             if line:
@@ -234,7 +333,7 @@ def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | Non
         if raw_line.strip():
             continue
         if y > PAGE_HEIGHT - MARGIN_Y:
-            page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+            page = new_template_page(document, font_path, company_suffix)
             y = MARGIN_Y
         y += LINE_HEIGHT
 
@@ -250,6 +349,13 @@ def write_pdf(source: Path, destination: Path, font_path: str | None, backend: s
         raise ValueError("The word backend only supports .docx input.")
     if backend == "libreoffice" and source.suffix.lower() != ".docx":
         raise ValueError("The libreoffice backend only supports .docx input.")
+
+    if source.suffix.lower() != ".docx":
+        print(
+            "Warning: rendering PDF directly from text/Markdown will not fully match DOCX layout. "
+            "Use DOCX input with --backend word for final deliverables.",
+            file=sys.stderr,
+        )
 
     if backend in {"auto", "word"} and source.suffix.lower() == ".docx":
         try:
@@ -274,7 +380,9 @@ def write_pdf(source: Path, destination: Path, font_path: str | None, backend: s
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Render a DOCX, UTF-8 text, or Markdown-like file to PDF.")
+    parser = argparse.ArgumentParser(
+        description="Render a DOCX, UTF-8 text, or Markdown-like file to PDF. Use DOCX input with --backend word for best style fidelity."
+    )
     parser.add_argument("source", type=Path, help="Source .docx, .txt, or .md file.")
     parser.add_argument("destination", type=Path, help="Destination .pdf file.")
     parser.add_argument(

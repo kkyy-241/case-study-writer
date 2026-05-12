@@ -4,7 +4,7 @@
 
 Use section titles that fit the case. The following sequence works well for finance-focused entrepreneurship cases:
 
-For this repository, use `supporting_documents/examples/安德科铭/安德科铭正文案例.pdf` as the default student-case format template. Match its document style and organization unless the user requests a different template.
+For this repository, use `references/format-templates/安德科铭正文案例.pdf` as the default student-case format template. Match its document style and organization unless the user requests a different template.
 
 The student-facing case body should be 8,000-10,000 Chinese characters unless the user explicitly changes the length target.
 

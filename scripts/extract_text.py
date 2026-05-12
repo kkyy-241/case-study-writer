@@ -89,9 +89,9 @@ def output_path_for(source: Path, input_root: Path, output_root: Path) -> Path:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Extract text from documents into .txt artifacts.")
+    parser = argparse.ArgumentParser(description="Extract text from documents into intermediate .txt files.")
     parser.add_argument("input", type=Path, help="Input file or directory.")
-    parser.add_argument("--output", type=Path, default=Path("artifacts/text"), help="Output directory.")
+    parser.add_argument("--output", type=Path, default=Path("outputs/text"), help="Output directory.")
     args = parser.parse_args()
 
     input_path = args.input.resolve()

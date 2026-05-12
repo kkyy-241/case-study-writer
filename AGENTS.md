@@ -12,12 +12,16 @@ Use the repository Python wrapper so the intended Conda environment is used even
 .\scripts\run_python.ps1 scripts/check_dependencies.py
 ```
 
-By default, the wrapper uses `D:\anaconda3\envs\python313\python.exe`. To use a different interpreter temporarily, set `CASE_WRITER_PYTHON` to the full path of the desired `python.exe`.
+By default, the wrapper uses this workstation's Conda interpreter at `D:\anaconda3\envs\python313\python.exe`. Other users should set `CASE_WRITER_PYTHON` to the full path of their desired `python.exe` before running repository scripts.
 
 The required Python packages are listed in `requirements.txt`:
 
 - `PyMuPDF` for PDF text extraction through the `fitz` module.
 - `PyYAML` for YAML/frontmatter checks and skill validation workflows.
+- `python-docx` for DOCX draft generation through the `docx` module.
+- `pywin32` on Windows for Microsoft Word COM PDF export through the `win32com` module.
+
+Microsoft Word with `pywin32` is recommended on Windows for the most faithful DOCX-to-PDF conversion. LibreOffice is the cross-platform fallback. Without either, `scripts/write_pdf.py` falls back to a lightweight PyMuPDF text renderer.
 
 The script prints the Python executable and version so environment mix-ups are easy to spot.
 
@@ -37,11 +41,11 @@ Before drafting a teaching case, ask the user what they want the case to emphasi
 
 After source inventory and fact-base preparation, present a concise plan and wait for explicit user approval before writing any student-facing case draft, teaching note, substantial narrative section, or final PDF. Before approval, only dependency checks, source extraction, source inventory, short fact-base notes, clarification questions, and proposed plans are allowed.
 
-For case writing, use `supporting_documents/examples/安德科铭/安德科铭正文案例.pdf` and `supporting_documents/examples/安德科铭/安德科铭案例使用说明.pdf` as the default format templates. The student-facing case body should be 8,000-10,000 Chinese characters unless the user explicitly changes the length. The teaching note (案例使用说明) should be 10,000-15,000 Chinese characters unless the user explicitly changes the length.
+For case writing, use `.codex_skills/case-writer/references/format-templates/安德科铭正文案例.pdf` and `.codex_skills/case-writer/references/format-templates/安德科铭案例使用说明.pdf` as the default format templates. The student-facing case body should be 8,000-10,000 Chinese characters unless the user explicitly changes the length. The teaching note (案例使用说明) should be 10,000-15,000 Chinese characters unless the user explicitly changes the length.
 
 ## Final Outputs
 
-Current repository rule: final deliverables belong in `outputs/` and include both DOCX drafts and PDFs. Keep `outputs/案例正文.docx`, `outputs/案例正文.pdf`, `outputs/案例使用说明.docx`, and `outputs/案例使用说明.pdf`. Do not use `--delete-source` for final DOCX drafts. Any older examples in this file that mention deleting draft sources are superseded by this rule.
+Current repository rule: final deliverables belong in `outputs/` and include both DOCX drafts and PDFs. Keep `outputs/案例正文.docx`, `outputs/案例正文.pdf`, `outputs/案例使用说明.docx`, and `outputs/案例使用说明.pdf`. Keep final DOCX drafts after PDF conversion. Any older examples in this file that mention deleting draft sources are superseded by this rule.
 
 Final case deliverables belong in `outputs/` and should include both DOCX drafts and PDFs:
 
@@ -52,21 +56,25 @@ Final case deliverables belong in `outputs/` and should include both DOCX drafts
 
 Both final PDFs should be written in Chinese unless another language is explicitly requested. Facts drawn from `supporting_documents/background/` should be marked with footer-style endnotes or a clearly labeled source endnote block when page footers are not technically available.
 
-Draft in DOCX first, then convert to PDF with `scripts/write_pdf.py`. Keep both the DOCX drafts and PDFs:
+After approval, create non-deliverable UTF-8 text drafts under `outputs/text/drafts/`, convert them to DOCX with `scripts/write_docx.py`, then convert the DOCX files to PDF with `scripts/write_pdf.py`. For DOCX inputs, `write_pdf.py` defaults to `--backend auto`: it tries Microsoft Word COM first on Windows, then LibreOffice, then a lightweight PyMuPDF text renderer. Keep both the DOCX drafts and PDFs:
 
 ```powershell
+.\scripts\run_python.ps1 scripts/write_docx.py outputs/text/drafts/案例正文.txt outputs/案例正文.docx
+.\scripts\run_python.ps1 scripts/write_docx.py outputs/text/drafts/案例使用说明.txt outputs/案例使用说明.docx
 .\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例正文.docx outputs/案例正文.pdf
 .\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例使用说明.docx outputs/案例使用说明.pdf
 ```
 
-Keep the final DOCX drafts in `outputs/`. Delete only non-deliverable intermediate products after final PDFs are generated.
+Keep the final DOCX drafts in `outputs/`. Delete only non-deliverable intermediate products, including `outputs/text/`, after final PDFs are generated.
 
 ## Source Material Policy
 
 - `supporting_documents/background/` contains public news, public company pages, and other source material for the case being written.
-- `supporting_documents/examples/` contains representative teaching-case examples that informed the `case-writer` method.
-- `supporting_documents/methodology/` contains case-writing methodology materials that informed the `case-writer` method.
-- The `supporting_documents/` contents may be committed to GitHub for this repository.
+- `supporting_documents/examples/` contains representative teaching-case examples used, through Codex's built-in `skill-creator` workflow, to derive the `case-writer` skill's default case structure, document style, template expectations, and quality checks.
+- `supporting_documents/methodology/` contains case-writing methodology materials used, through Codex's built-in `skill-creator` workflow, to derive the `case-writer` skill's writing principles, plan-first workflow, teaching-note requirements, and evaluation standards.
+- `.codex_skills/case-writer/references/format-templates/` contains the default runtime format templates inspected by `case-writer`; keep template files there rather than mixing them into user-collected examples.
+- Users of this repository may replace or extend `supporting_documents/examples/` with their own representative cases and `supporting_documents/methodology/` with their own case-writing requirements, then use `skill-creator` to update `.codex_skills/case-writer/` so the skill reflects those materials.
+- `supporting_documents/background/` contents may be committed when they are public source materials intended to accompany the case-writing run. `supporting_documents/examples/` and `supporting_documents/methodology/` are ignored by default because they are user-collected materials for building or updating the skill.
 
 ## Editing Guidance
 

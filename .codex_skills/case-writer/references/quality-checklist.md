@@ -6,8 +6,8 @@
 - Present a concise plan for approval after source preparation and before writing any draft prose, draft files, or final PDFs.
 - Do not begin the student case, teaching note, narrative sections, or final output generation until the user explicitly approves the plan.
 - Confirm that all intermediate products are written under `outputs/`, not `artifacts/`.
-- Confirm that the final drafts will be Markdown files converted to PDFs, with both `.md` and `.pdf` retained in `outputs/`.
-- Inspect `supporting_documents/examples/安德科铭/安德科铭正文案例.pdf` and `supporting_documents/examples/安德科铭/安德科铭案例使用说明.pdf` as the required format templates.
+- Confirm that the final drafts will be DOCX files converted to PDFs, with both `.docx` and `.pdf` retained in `outputs/`.
+- Inspect `references/format-templates/安德科铭正文案例.pdf` and `references/format-templates/安德科铭案例使用说明.pdf` as the required format templates.
 - If the background folder does not contain the confirmed core content, search public web sources or ask the user for supplementary materials.
 - Search the web for the latest important public news about the entrepreneur, startup/company, investors, financing, products, regulation, litigation, IPO/M&A, bankruptcy, or other material events.
 - Identify protagonist, company, decision date, decision location, and decision deadline.

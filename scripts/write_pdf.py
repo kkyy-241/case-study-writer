@@ -1,14 +1,17 @@
-"""Render a UTF-8 text or Markdown-like draft to PDF.
+"""Render a DOCX, UTF-8 text, or Markdown-like draft to PDF.
 
-This script intentionally supports only lightweight Markdown conventions. It is
-for final case deliverables, not full publishing-grade layout.
+For DOCX inputs, the default backend first tries Microsoft Word COM on Windows,
+then LibreOffice, then a lightweight PyMuPDF text renderer.
 """
 
 from __future__ import annotations
 
 import argparse
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
@@ -20,6 +23,18 @@ MARGIN_X = 54
 MARGIN_Y = 54
 FONT_SIZE = 11
 LINE_HEIGHT = 17
+
+SOFFICE_CANDIDATES = [
+    "soffice",
+    "libreoffice",
+    "C:/Program Files/LibreOffice/program/soffice.exe",
+    "C:/Program Files (x86)/LibreOffice/program/soffice.exe",
+    "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+    "/usr/bin/soffice",
+    "/usr/local/bin/soffice",
+]
+
+WORD_PDF_FORMAT = 17
 
 
 def find_default_font() -> str | None:
@@ -84,7 +99,73 @@ def split_wrapped_lines(text: str, max_units: int = 46) -> list[str]:
     return lines
 
 
-def write_pdf(source: Path, destination: Path, font_path: str | None) -> None:
+def find_soffice() -> str | None:
+    for candidate in SOFFICE_CANDIDATES:
+        resolved = shutil.which(candidate) if not Path(candidate).is_absolute() else candidate
+        if resolved and Path(resolved).exists():
+            return str(resolved)
+    return None
+
+
+def write_pdf_with_libreoffice(source: Path, destination: Path) -> None:
+    soffice = find_soffice()
+    if not soffice:
+        raise RuntimeError("LibreOffice soffice executable was not found.")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        command = [
+            soffice,
+            "--headless",
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            temp_dir,
+            str(source.resolve()),
+        ]
+        completed = subprocess.run(command, capture_output=True, text=True, timeout=120)
+        if completed.returncode != 0:
+            message = completed.stderr.strip() or completed.stdout.strip()
+            raise RuntimeError(f"LibreOffice PDF conversion failed: {message}")
+
+        converted = Path(temp_dir) / f"{source.stem}.pdf"
+        if not converted.exists():
+            raise RuntimeError("LibreOffice did not produce the expected PDF output.")
+        shutil.move(str(converted), destination)
+
+
+def write_pdf_with_word(source: Path, destination: Path) -> None:
+    if source.suffix.lower() != ".docx":
+        raise ValueError("The word backend only supports .docx input.")
+
+    try:
+        import pythoncom
+        import win32com.client
+    except ImportError as exc:
+        raise RuntimeError("pywin32 is required for Microsoft Word PDF export.") from exc
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    source_path = str(source.resolve())
+    destination_path = str(destination.resolve())
+
+    pythoncom.CoInitialize()
+    word = None
+    document = None
+    try:
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
+        word.DisplayAlerts = 0
+        document = word.Documents.Open(source_path, ReadOnly=True)
+        document.ExportAsFixedFormat(destination_path, WORD_PDF_FORMAT)
+    finally:
+        if document is not None:
+            document.Close(False)
+        if word is not None:
+            word.Quit()
+        pythoncom.CoUninitialize()
+
+
+def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | None) -> None:
     try:
         import fitz
     except ImportError as exc:
@@ -122,21 +203,54 @@ def write_pdf(source: Path, destination: Path, font_path: str | None) -> None:
     document.close()
 
 
+def write_pdf(source: Path, destination: Path, font_path: str | None, backend: str) -> str:
+    if backend not in {"auto", "word", "libreoffice", "pymupdf"}:
+        raise ValueError(f"Unsupported backend: {backend}")
+
+    if backend == "word" and source.suffix.lower() != ".docx":
+        raise ValueError("The word backend only supports .docx input.")
+    if backend == "libreoffice" and source.suffix.lower() != ".docx":
+        raise ValueError("The libreoffice backend only supports .docx input.")
+
+    if backend in {"auto", "word"} and source.suffix.lower() == ".docx":
+        try:
+            write_pdf_with_word(source, destination)
+            return "word"
+        except Exception as exc:
+            if backend == "word":
+                raise
+            print(f"Microsoft Word conversion unavailable, falling back: {exc}", file=sys.stderr)
+
+    if backend in {"auto", "libreoffice"} and source.suffix.lower() == ".docx":
+        try:
+            write_pdf_with_libreoffice(source, destination)
+            return "libreoffice"
+        except Exception as exc:
+            if backend == "libreoffice":
+                raise
+            print(f"LibreOffice conversion unavailable, falling back to PyMuPDF: {exc}", file=sys.stderr)
+
+    write_pdf_with_pymupdf(source, destination, font_path)
+    return "pymupdf"
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Render a UTF-8 text/Markdown-like file to PDF.")
-    parser.add_argument("source", type=Path, help="Source .txt or .md file.")
+    parser = argparse.ArgumentParser(description="Render a DOCX, UTF-8 text, or Markdown-like file to PDF.")
+    parser.add_argument("source", type=Path, help="Source .docx, .txt, or .md file.")
     parser.add_argument("destination", type=Path, help="Destination .pdf file.")
+    parser.add_argument(
+        "--backend",
+        choices=["auto", "word", "libreoffice", "pymupdf"],
+        default="auto",
+        help="PDF backend. auto tries Word COM, then LibreOffice for DOCX inputs, then falls back to PyMuPDF.",
+    )
     parser.add_argument("--font", type=Path, help="Optional font file path, recommended for Chinese text.")
-    parser.add_argument("--delete-source", action="store_true", help="Delete the source draft after PDF creation.")
     args = parser.parse_args()
 
     font_path = str(args.font) if args.font else find_default_font()
-    write_pdf(args.source, args.destination, font_path)
+    backend = write_pdf(args.source, args.destination, font_path, args.backend)
 
-    if args.delete_source:
-        args.source.unlink()
-
-    print(f"Wrote {args.destination}")
+    print(f"Wrote {args.destination} with {backend}")
     return 0
 
 

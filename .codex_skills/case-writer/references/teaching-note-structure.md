@@ -1,6 +1,6 @@
 # Teaching Note Structure
 
-For this repository, use `supporting_documents/examples/安德科铭/安德科铭案例使用说明.pdf` as the default teaching-note format template. Match its document style and organization unless the user requests a different template.
+For this repository, use `references/format-templates/安德科铭案例使用说明.pdf` as the default teaching-note format template. Match its document style and organization unless the user requests a different template.
 
 ## Required Sections
 
@@ -82,6 +82,16 @@ Across the five answers, cover the theories most relevant to the case:
 ## Tone Difference From Student Case
 
 The teaching note should be direct, analytical, and theory-grounded. It may reveal recommended answers and calculations. It should not continue the story style of the case narrative.
+
+## Analytical Depth
+
+Prioritize completeness, pedagogical depth, and analytical richness over brevity when drafting the teaching note. Do not overly constrain the length of this section. The teaching note should function as a comprehensive instructional resource for instructors who may not already possess deep expertise in the focal industry, company, or financial instruments discussed in the case.
+
+Within this section, provide detailed explanations of all financing tools, capital structure decisions, investment mechanisms, and financial arrangements mentioned in the case narrative, including their definitions, operational mechanics, practical applications, strategic rationale, advantages, disadvantages, risks, stakeholder incentives, and implications for valuation, governance, control, liquidity, and future fundraising.
+
+Whenever appropriate, include expanded background explanations and conceptual discussions related to venture capital, private equity, convertible notes, SAFE agreements, preferred shares, IPOs, secondary offerings, debt financing, SPVs, syndication structures, dilution, liquidation preferences, corporate governance, entrepreneurial finance, and other relevant finance concepts.
+
+The teaching note should also proactively connect the case to broader business school learning objectives, finance theory, entrepreneurial finance frameworks, strategic decision-making, and real-world industry practices. Rich explanatory content, contextual expansion, interdisciplinary linkage, and extended conceptual discussion are strongly encouraged even if they substantially increase the overall length of this section.
 
 ## Source Notes
 

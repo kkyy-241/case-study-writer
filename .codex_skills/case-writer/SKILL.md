@@ -1,13 +1,15 @@
 ---
 name: case-writer
-description: "Write finance-focused business school teaching cases and teaching notes from case background materials. Use when Codex needs to synthesize a background folder into two independent Chinese teaching-case PDF files: a student-facing narrative case and an instructor-facing case teaching note, especially for undergraduate, master's, MBA, entrepreneurship finance, corporate finance, venture capital, valuation, equity structure, financing decisions, control rights, or investor negotiation contexts."
+description: "Write finance-focused business school teaching cases and teaching notes from case background materials. Use when Codex needs to synthesize a background folder into independent Chinese teaching-case DOCX drafts and PDF files: a student-facing narrative case and an instructor-facing case teaching note, especially for undergraduate, master's, MBA, entrepreneurship finance, corporate finance, venture capital, valuation, equity structure, financing decisions, control rights, or investor negotiation contexts."
 ---
 
 # Case Writer
 
 ## Overview
 
-Use this skill to turn raw background materials into a business school teaching case package for finance and entrepreneurship finance classes. Produce two separate Chinese-language PDF files: a student-facing case narrative and an instructor-facing case teaching note.
+Use this skill to turn raw background materials into a business school teaching case package for finance and entrepreneurship finance classes. Produce two separate Chinese-language DOCX drafts and matching PDF files: a student-facing case narrative and an instructor-facing case teaching note.
+
+This skill was created with Codex's built-in `skill-creator` workflow from the repository's collected case examples in `supporting_documents/examples/` and case-writing methodology materials in `supporting_documents/methodology/`. Repository users may update those folders with their own representative cases and writing-method requirements, then use `skill-creator` to revise this skill so its workflow and references match their preferred standards.
 
 ## Workflow
 
@@ -25,34 +27,35 @@ Before approval, only do preparatory work: dependency checks, source extraction 
 
 ### Phase 1: Source Preparation And Approved Drafting
 
-1. If working inside this repository, use the repository wrapper `.\scripts\run_python.ps1` so the configured Conda environment is used instead of any shell-level Windows Store Python launcher. Run `.\scripts\run_python.ps1 scripts/check_dependencies.py` before extracting documents or validating YAML. Required packages are `PyMuPDF` (`fitz`) and `PyYAML` (`yaml`).
+1. If working inside this repository, use the repository wrapper `.\scripts\run_python.ps1` so the configured Conda environment is used instead of any shell-level Windows Store Python launcher. Run `.\scripts\run_python.ps1 scripts/check_dependencies.py` before extracting documents, generating DOCX drafts, or validating YAML. Required packages are `PyMuPDF` (`fitz`), `PyYAML` (`yaml`), and `python-docx` (`docx`).
 2. Use the same wrapper to run `.\scripts\run_python.ps1 scripts/extract_text.py <background-folder> --output outputs/text/<name>` and create intermediate text products from PDF, DOCX, text, Markdown, or HTML background materials. Keep all intermediate products under `outputs/`; do not use `artifacts/` for case-writing runs.
 3. Before drafting, ask the user to state the core focus of the case for this run, such as the target entrepreneur, startup/company, financing event, decision conflict, course, and desired teaching emphasis. If the background materials do not contain that core content, use web search to fill public facts or ask the user to provide more materials when the missing content is not publicly available.
 4. Read the user's background folder before drafting. Build a fact base with dates, actors, company milestones, financing events, amounts, valuations, ownership terms, investor options, conflicts, market data, and sources.
 5. Use web search before writing the student case to check for the latest important news about the entrepreneur, startup/company, financing round, investors, products, regulation, litigation, IPO/M&A, bankruptcy, or other material events. Incorporate relevant, verified, up-to-date news into the case facts with source traceability. If web access is unavailable, state that limitation and ask the user whether to proceed from local materials only.
 6. Identify the case core: protagonist, decision deadline, financing dilemma, viable alternatives, missing information, and the finance theories students should apply.
-7. Before drafting, inspect `supporting_documents/examples/安德科铭/安德科铭正文案例.pdf` and `supporting_documents/examples/安德科铭/安德科铭案例使用说明.pdf` as the required format templates. Match their document style, section logic, teaching-case tone, and instructor-note organization unless the user requests a different template.
+7. Before drafting, inspect `references/format-templates/安德科铭正文案例.pdf` and `references/format-templates/安德科铭案例使用说明.pdf` as the required format templates. Match their document style, section logic, teaching-case tone, and instructor-note organization unless the user requests a different template.
 8. Read only the references needed for the task:
    - `references/case-writing-method.md` for case method principles and narrative standards.
    - `references/student-case-structure.md` before writing the student-facing case.
    - `references/teaching-note-structure.md` before writing the instructor note.
    - `references/entrepreneurial-finance-frameworks.md` when designing questions and reference answers.
    - `references/quality-checklist.md` before final delivery.
-9. Draft the student case first as Markdown in `outputs/案例正文.md`. Keep it story-like, factual, decision-centered, and free of instructor analysis or final answers. The student-facing case body should be 8,000-10,000 Chinese characters unless the user changes the target length.
+9. Draft the student case first as a non-deliverable UTF-8 text source in `outputs/text/drafts/案例正文.txt`, then generate `outputs/案例正文.docx` with `.\scripts\run_python.ps1 scripts/write_docx.py outputs/text/drafts/案例正文.txt outputs/案例正文.docx`. Keep the case story-like, factual, decision-centered, and free of instructor analysis or final answers. The student-facing case body should be 8,000-10,000 Chinese characters unless the user changes the target length.
 10. End the student-facing case with an open decision node. The ending must leave the protagonist facing unresolved alternatives and must not reveal the recommended answer.
 11. Draft five discussion questions at the end of the student case. Make them logically progressive from fact diagnosis to financial analysis to decision judgment.
-12. Draft the teaching note second as Markdown in `outputs/案例使用说明.md`. Reuse the same five questions and provide theory-grounded reference answers tied to case facts.
-13. Convert Markdown drafts with `.\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例正文.md outputs/案例正文.pdf` and `.\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例使用说明.md outputs/案例使用说明.pdf`. Keep both Markdown drafts and PDFs in `outputs/`.
-14. At the end of the run, delete non-deliverable intermediate products outside the retained `.md` and `.pdf` deliverables, including extracted text folders under `outputs/text/` unless the user explicitly asks to keep them.
-13. Mark information sources from the `background` folder as footer-style endnotes. Use numbered note markers in the body and place concise source notes at the bottom of the relevant page, or in a clearly labeled `资料来源尾注` block if true per-page footers are not technically available in the draft format.
+12. Draft the teaching note second as a non-deliverable UTF-8 text source in `outputs/text/drafts/案例使用说明.txt`, then generate `outputs/案例使用说明.docx` with `.\scripts\run_python.ps1 scripts/write_docx.py outputs/text/drafts/案例使用说明.txt outputs/案例使用说明.docx`. Reuse the same five questions and provide theory-grounded reference answers tied to case facts. The teaching note should be 10,000-15,000 Chinese characters unless the user changes the target length.
+13. Convert DOCX drafts with `.\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例正文.docx outputs/案例正文.pdf` and `.\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例使用说明.docx outputs/案例使用说明.pdf`. For DOCX inputs, `write_pdf.py` defaults to `--backend auto`: it tries Microsoft Word COM first on Windows, then LibreOffice, then a lightweight PyMuPDF text renderer. Keep both DOCX drafts and PDFs in `outputs/`.
+14. At the end of the run, delete non-deliverable intermediate products outside the retained `.docx` and `.pdf` deliverables, including extracted text folders under `outputs/text/` unless the user explicitly asks to keep them.
+15. Mark information sources from the `background` folder as footer-style endnotes. Use numbered note markers in the body and place concise source notes at the bottom of the relevant page, or in a clearly labeled `资料来源尾注` block if true per-page footers are not technically available in the draft format.
 
 ## Non-Negotiables
 
 - Write both final PDF files in Chinese. Only switch languages if the user explicitly requests another language.
 - Always run the plan-first consent gate before drafting. Ask for the run-specific case focus, propose a plan, and wait for explicit user approval before writing draft prose or final outputs.
-- Do not use `artifacts/` for case-writing intermediate products. Put intermediate text, Markdown drafts, and generated PDFs under `outputs/`; keep only the final `.md` and `.pdf` deliverables there after cleanup.
-- Use `supporting_documents/examples/安德科铭/安德科铭正文案例.pdf` and `supporting_documents/examples/安德科铭/安德科铭案例使用说明.pdf` as the default formatting and organization templates.
+- Do not use `artifacts/` for case-writing intermediate products. Put intermediate text, DOCX drafts, and generated PDFs under `outputs/`; keep only the final `.docx` and `.pdf` deliverables there after cleanup.
+- Use `references/format-templates/安德科铭正文案例.pdf` and `references/format-templates/安德科铭案例使用说明.pdf` as the default formatting and organization templates.
 - The student-facing case body must be 8,000-10,000 Chinese characters unless the user explicitly changes the length.
+- The teaching note must be 10,000-15,000 Chinese characters unless the user explicitly changes the length.
 - Do not invent facts, amounts, dates, investor names, financing terms, or outcomes. If a needed fact is absent, state an assumption or mark it as unavailable.
 - Check the latest important public news by web search before writing the student-facing case, and cite or otherwise trace the sources used.
 - Do not reveal the real outcome after the decision point in the student-facing case unless the background materials and user explicitly require a retrospective case.
@@ -64,7 +67,7 @@ Before approval, only do preparatory work: dependency checks, source extraction 
 
 ## Output Contract
 
-Current repository output rules supersede any older wording in this file: write Markdown drafts first, keep the Markdown drafts, and convert them to PDFs. The retained deliverables are four files in `outputs/`: `案例正文.md`, `案例正文.pdf`, `案例使用说明.md`, and `案例使用说明.pdf`. Do not use `--delete-source` when converting these Markdown drafts.
+Current repository output rules supersede any older wording in this file: create DOCX drafts with `scripts/write_docx.py`, keep the DOCX drafts, and convert them to PDFs with `scripts/write_pdf.py`. The PDF converter tries Microsoft Word COM first on Windows, then LibreOffice, then PyMuPDF text rendering when layout-preserving converters are unavailable. The retained deliverables are four files in `outputs/`: `案例正文.docx`, `案例正文.pdf`, `案例使用说明.docx`, and `案例使用说明.pdf`. Keep the DOCX drafts after PDF conversion and delete only non-deliverable intermediate text sources.
 
 Create the following substantive Chinese-language deliverables unless the user asks for more:
 
@@ -77,4 +80,4 @@ Use concrete scenes, dates, people, dialogue, boardroom or negotiation tension, 
 
 Avoid promotional writing, generic management advice, moralizing, unsupported adjectives, and omniscient conclusions. The case should make students work.
 
-For this repository, use `supporting_documents/examples/安德科铭/安德科铭正文案例.pdf` and `supporting_documents/examples/安德科铭/安德科铭案例使用说明.pdf` as the default format templates. The student-facing case body should be 8,000-10,000 Chinese characters unless the user explicitly changes the requirement.
+For this repository, use `references/format-templates/安德科铭正文案例.pdf` and `references/format-templates/安德科铭案例使用说明.pdf` as the default format templates. The student-facing case body should be 8,000-10,000 Chinese characters unless the user explicitly changes the requirement. The teaching note should be 10,000-15,000 Chinese characters unless the user changes the target length.

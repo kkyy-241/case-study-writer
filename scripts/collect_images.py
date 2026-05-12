@@ -10,6 +10,7 @@ The script is intentionally small and dependency-light:
 For web-sourced images, first use Codex web/image search to identify suitable
 public image URLs and source pages, then pass the image URLs to this script with
 matching --source-note values so the generated manifest preserves traceability.
+The workflow must not generate its own diagrams or synthetic images.
 """
 
 from __future__ import annotations
@@ -232,7 +233,7 @@ def main() -> int:
         default=[],
         help="Source note for matching --url entries, such as title, publisher, date, and source page.",
     )
-    parser.add_argument("--output", type=Path, default=Path("outputs/text/images"), help="Output image directory.")
+    parser.add_argument("--output", type=Path, default=Path("outputs/drafts/images"), help="Output image directory.")
     parser.add_argument("--min-bytes", type=int, default=4096, help="Skip tiny decorative images below this size.")
     args = parser.parse_args()
 

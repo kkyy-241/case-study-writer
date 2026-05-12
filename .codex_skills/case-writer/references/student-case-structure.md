@@ -55,7 +55,7 @@ For each major fact, explain why it matters financially:
 
 - Financing round table: date, investor, amount, valuation, instrument, share percentage, key terms, use of proceeds.
 - Cap table before and after financing.
-- Relevant images or diagrams: product screenshots, facilities, market context photos, ownership/control diagrams, financing timelines, or financing-instrument matrices. Collect source images with `scripts/collect_images.py`; if local background materials lack suitable images, use web/image search and preserve source notes.
+- Relevant extracted or web-searched images: product screenshots, facilities, market context photos, ownership/control visuals, financing timelines, or financing-instrument exhibits. Collect source images with `scripts/collect_images.py`; if local background materials lack suitable images, use web/image search and preserve source notes. Do not create charts, diagrams, or synthetic images yourself.
 - Cash runway: cash, monthly burn, planned spending, revenue/cash inflow, funding gap.
 - Valuation support: comparable firms, revenue/profit multiples, DCF assumptions, scenario analysis, option value, strategic value.
 - Contract terms: preferred shares, convertible notes, SAFE-like instruments, warrants, redemption, liquidation preference, anti-dilution, ratchets, earn-outs, veto rights, board seats.

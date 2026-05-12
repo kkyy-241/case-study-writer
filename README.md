@@ -18,6 +18,7 @@ The skill is designed for undergraduate and graduate business education. Given a
       format-templates/
 scripts/
   check_dependencies.py
+  collect_images.py
   extract_text.py
   write_docx.py
   write_pdf.py
@@ -92,6 +93,35 @@ Use the internal extraction script to convert background materials into text art
 
 Generated text for case-writing runs should be written under `outputs/`. Delete non-deliverable intermediate products, such as `outputs/text/`, at the end of the run unless you explicitly choose to keep them.
 
+## Collect Case Images
+
+Case drafts may include image syntax in the UTF-8 draft source:
+
+```markdown
+![图1 股权结构示意图](../images/ownership-chart.png)
+```
+
+`scripts/write_docx.py` embeds those images in the DOCX. `scripts/write_pdf.py` can also render image syntax when the PyMuPDF fallback is run directly from the text draft. If Microsoft Word or LibreOffice is available, prefer converting from DOCX for the most faithful layout.
+
+Before drafting, collect usable image assets from `supporting_documents/background/`:
+
+```powershell
+.\scripts\run_python.ps1 scripts/collect_images.py supporting_documents/background --output outputs/text/images
+```
+
+The script extracts images from PDF and DOCX files, copies existing image files, discovers local images referenced by HTML files, and writes `manifest.json` plus `manifest.md` with source traceability.
+
+If the background materials do not contain suitable images for exhibits such as product photos, headquarters photos, founder portraits, financing diagrams, market screenshots, or ownership visuals, use web/image search to find appropriate public images. Then download the selected direct image URLs with source notes:
+
+```powershell
+.\scripts\run_python.ps1 scripts/collect_images.py `
+  --url "https://example.com/path/image.jpg" `
+  --source-note "Image title, publisher/site, publication date or access date, source page URL" `
+  --output outputs/text/images
+```
+
+Only use images that are relevant to the case analysis or classroom exhibits, and preserve the source note in the case's source notes or image manifest.
+
 ## Using The Skill
 
 The skill source lives at:
@@ -126,6 +156,13 @@ Create non-deliverable UTF-8 text drafts under `outputs/text/drafts/`, render th
 .\scripts\run_python.ps1 scripts/write_docx.py outputs/text/drafts/案例使用说明.txt outputs/案例使用说明.docx
 .\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例正文.docx outputs/案例正文.pdf
 .\scripts\run_python.ps1 scripts/write_pdf.py outputs/案例使用说明.docx outputs/案例使用说明.pdf
+```
+
+If a draft contains image syntax and the DOCX-to-PDF converters are unavailable, render the PDF from the text source so the PyMuPDF fallback can preserve the referenced images:
+
+```powershell
+.\scripts\run_python.ps1 scripts/write_pdf.py outputs/text/drafts/案例正文.txt outputs/案例正文.pdf
+.\scripts\run_python.ps1 scripts/write_pdf.py outputs/text/drafts/案例使用说明.txt outputs/案例使用说明.pdf
 ```
 
 To require Microsoft Word conversion and fail if Word or `pywin32` is unavailable, pass `--backend word`. To require LibreOffice conversion, pass `--backend libreoffice`.

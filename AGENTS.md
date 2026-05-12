@@ -35,6 +35,29 @@ Use the repository scripts for generated text artifacts instead of ad hoc extrac
 
 The script supports `.pdf`, `.docx`, `.txt`, `.md`, and `.html`/`.htm` inputs. Case-writing intermediate products should stay under `outputs/`; do not use `artifacts/` for case-writing runs. Delete non-deliverable intermediate products, such as `outputs/text/`, at the end of the run unless the user explicitly asks to keep them.
 
+## Image Assets
+
+Use repository scripts for generated image artifacts instead of ad hoc extraction or download commands. Before drafting a case that would benefit from visuals, collect candidate images from the background folder:
+
+```powershell
+.\scripts\run_python.ps1 scripts/collect_images.py supporting_documents/background --output outputs/text/images
+```
+
+The script extracts images from PDFs and DOCX files, copies local image files, discovers local images referenced by HTML files, and writes `manifest.json` and `manifest.md` with traceable source notes.
+
+If `supporting_documents/background/` does not contain suitable images, use web/image search to identify appropriate public images, then download only the selected direct image URLs with source notes:
+
+```powershell
+.\scripts\run_python.ps1 scripts/collect_images.py `
+  --url "https://example.com/path/image.jpg" `
+  --source-note "Image title, publisher/site, publication date or access date, source page URL" `
+  --output outputs/text/images
+```
+
+Draft sources may reference collected images with Markdown image syntax such as `![图1 股权结构示意图](../images/ownership-chart.png)`. `scripts/write_docx.py` embeds these images in DOCX. If Word COM and LibreOffice are unavailable and the PDF needs to preserve images, run `scripts/write_pdf.py` directly on the text draft rather than the DOCX source so the PyMuPDF fallback can render image syntax.
+
+Only use images that support case analysis or classroom exhibits. Preserve image source traceability in the case source notes or in the generated image manifest.
+
 ## Plan-First Case Workflow
 
 Before drafting a teaching case, ask the user what they want the case to emphasize: protagonist or decision maker, company/event scope, core problem, course/audience, teaching emphasis, and whether the case should be prospective or retrospective.

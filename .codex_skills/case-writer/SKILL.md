@@ -48,8 +48,15 @@ Before approval, only do preparatory work: dependency checks, source extraction 
 14. At the end of the run, delete non-deliverable intermediate products outside the retained `.docx` and `.pdf` deliverables, including extracted text folders under `outputs/text/` unless the user explicitly asks to keep them.
 15. Mark information sources from the `background` folder as footer-style endnotes. Use numbered note markers in the body and place concise source notes at the bottom of the relevant page, or in a clearly labeled `资料来源尾注` block if true per-page footers are not technically available in the draft format.
 
+### Image Asset Workflow
+
+When visuals would help the case, use repository scripts for image preparation. First run `.\scripts\run_python.ps1 scripts/collect_images.py <background-folder> --output outputs/text/images` to extract candidate images from PDF/DOCX/background image files and create `manifest.json` and `manifest.md`. If the background materials do not contain suitable images for exhibits, product/company context, financing diagrams, equity/control visuals, or market screenshots, use web/image search to identify appropriate public images, then download only selected direct image URLs with `scripts/collect_images.py --url <image-url> --source-note <title/publisher/date/source-page> --output outputs/text/images`.
+
+Draft sources may insert collected images with Markdown image syntax, such as `![图1 股权结构示意图](../images/ownership-chart.png)`. `scripts/write_docx.py` embeds these images in DOCX. If the draft contains image syntax and Word/LibreOffice are unavailable for PDF conversion, run `scripts/write_pdf.py` directly on the text draft so the PyMuPDF fallback can include referenced images. Preserve image source traceability in the image manifest and in the case source notes when a visual is used as evidence.
+
 ## Non-Negotiables
 
+- Use `scripts/collect_images.py` for local image extraction and web-sourced image downloads. If background materials lack suitable images and visuals would improve the case, use web/image search to identify relevant public images, download only selected direct image URLs, and keep title/publisher/date/source-page traceability.
 - Write both final PDF files in Chinese. Only switch languages if the user explicitly requests another language.
 - Always run the plan-first consent gate before drafting. Ask for the run-specific case focus, propose a plan, and wait for explicit user approval before writing draft prose or final outputs.
 - Do not use `artifacts/` for case-writing intermediate products. Put intermediate text, DOCX drafts, and generated PDFs under `outputs/`; keep only the final `.docx` and `.pdf` deliverables there after cleanup.

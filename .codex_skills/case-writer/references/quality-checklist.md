@@ -10,6 +10,7 @@
 - Inspect `references/format-templates/安德科铭正文案例.pdf` and `references/format-templates/安德科铭案例使用说明.pdf` as the required format templates.
 - If the background folder does not contain the confirmed core content, search public web sources or ask the user for supplementary materials.
 - Search the web for the latest important public news about the entrepreneur, startup/company, investors, financing, products, regulation, litigation, IPO/M&A, bankruptcy, or other material events.
+- Run `scripts/collect_images.py` when visuals would improve the case. If background materials lack suitable images, use web/image search to find appropriate public images, download selected direct image URLs through `collect_images.py`, and preserve source notes in the image manifest.
 - Identify protagonist, company, decision date, decision location, and decision deadline.
 - Create a timeline of major operating and financing events.
 - Create a financing facts table.
@@ -29,11 +30,13 @@
 - Shows alternatives with genuine tradeoffs.
 - Includes valuation, dilution, equity structure, control, investor terms, or financing instruments when relevant.
 - Contains enough data for students to calculate or reason.
+- Includes relevant images, charts, or exhibits when they clarify product context, financing tools, equity/control structure, market setting, or decision alternatives.
 - Does not include reference answers, theory lectures, or author judgment.
 - Ends at an open decision node.
 - Does not close with a resolved outcome, author recommendation, or teaching conclusion.
 - Includes five logically progressive finance-focused discussion questions.
 - Marks `background` facts with numbered note markers and includes footer-style source notes or a clearly labeled endnote block.
+- Preserves source traceability for any images used as evidence or exhibits.
 
 ## Teaching Note Checklist
 

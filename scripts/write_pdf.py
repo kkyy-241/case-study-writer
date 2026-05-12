@@ -23,6 +23,7 @@ MARGIN_X = 54
 MARGIN_Y = 54
 FONT_SIZE = 11
 LINE_HEIGHT = 17
+IMAGE_PATTERN = re.compile(r"^!\[(?P<alt>[^\]]*)\]\((?P<path>[^)]+)\)$")
 
 SOFFICE_CANDIDATES = [
     "soffice",
@@ -165,6 +166,16 @@ def write_pdf_with_word(source: Path, destination: Path) -> None:
         pythoncom.CoUninitialize()
 
 
+def insert_text_line(page, line: str, y: float, font_path: str | None) -> None:
+    page.insert_text(
+        (MARGIN_X, y),
+        line,
+        fontsize=FONT_SIZE,
+        fontname="casefont" if font_path else "helv",
+        fontfile=font_path,
+    )
+
+
 def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | None) -> None:
     try:
         import fitz
@@ -176,27 +187,55 @@ def write_pdf_with_pymupdf(source: Path, destination: Path, font_path: str | Non
     else:
         text = source.read_text(encoding="utf-8")
     
-    text = normalize_markdown(text)
-    lines = split_wrapped_lines(text)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     document = fitz.open()
     page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
     y = MARGIN_Y
 
-    for line in lines:
+    for raw_line in text.split("\n"):
+        image_match = IMAGE_PATTERN.match(raw_line.strip())
+        if image_match and source.suffix.lower() != ".docx":
+            image_path = Path(image_match.group("path"))
+            if not image_path.is_absolute():
+                image_path = (source.parent / image_path).resolve()
+            if image_path.exists():
+                image_doc = fitz.open(image_path)
+                image_page = image_doc[0]
+                width = PAGE_WIDTH - 2 * MARGIN_X
+                height = width * image_page.rect.height / image_page.rect.width
+                if y + height > PAGE_HEIGHT - MARGIN_Y:
+                    page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+                    y = MARGIN_Y
+                rect = fitz.Rect(MARGIN_X, y, MARGIN_X + width, y + height)
+                page.insert_image(rect, filename=str(image_path))
+                y += height + LINE_HEIGHT
+                alt = image_match.group("alt").strip()
+                if alt:
+                    for caption_line in split_wrapped_lines(alt, max_units=46):
+                        if y > PAGE_HEIGHT - MARGIN_Y:
+                            page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+                            y = MARGIN_Y
+                        insert_text_line(page, caption_line, y, font_path)
+                        y += LINE_HEIGHT
+                image_doc.close()
+                continue
+
+        for line in split_wrapped_lines(normalize_markdown(raw_line), max_units=46):
+            if y > PAGE_HEIGHT - MARGIN_Y:
+                page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+                y = MARGIN_Y
+
+            if line:
+                insert_text_line(page, line, y, font_path)
+            y += LINE_HEIGHT
+
+        if raw_line.strip():
+            continue
         if y > PAGE_HEIGHT - MARGIN_Y:
             page = document.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
             y = MARGIN_Y
-
-        if line:
-            page.insert_text(
-                (MARGIN_X, y),
-                line,
-                fontsize=FONT_SIZE,
-                fontname="casefont" if font_path else "helv",
-                fontfile=font_path,
-            )
         y += LINE_HEIGHT
 
     document.save(destination)

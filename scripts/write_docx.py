@@ -10,6 +10,7 @@ from pathlib import Path
 
 DEFAULT_FONT = "Microsoft YaHei"
 HEADING_FONT = "Microsoft YaHei"
+IMAGE_PATTERN = re.compile(r"^!\[(?P<alt>[^\]]*)\]\((?P<path>[^)]+)\)$")
 
 
 def clean_inline_markdown(text: str) -> str:
@@ -63,6 +64,7 @@ def configure_document(document) -> None:
 def write_docx(source: Path, destination: Path) -> None:
     try:
         from docx import Document
+        from docx.shared import Cm
     except ImportError as exc:
         raise RuntimeError("python-docx is required. Run scripts/check_dependencies.py.") from exc
 
@@ -72,6 +74,18 @@ def write_docx(source: Path, destination: Path) -> None:
 
     for raw_line in text.split("\n"):
         if not raw_line.strip():
+            continue
+
+        image_match = IMAGE_PATTERN.match(raw_line.strip())
+        if image_match:
+            image_path = Path(image_match.group("path"))
+            if not image_path.is_absolute():
+                image_path = (source.parent / image_path).resolve()
+            document.add_picture(str(image_path), width=Cm(14.5))
+            alt_text = clean_inline_markdown(image_match.group("alt"))
+            if alt_text:
+                caption = document.add_paragraph(style="Normal")
+                caption.add_run(alt_text)
             continue
 
         style, content = parse_line(raw_line)

@@ -10,7 +10,7 @@ env/
 
 # Generated intermediate products
 artifacts/
-generated/
+/generated/
 outputs/*
 !outputs/.gitkeep
 !outputs/drafts/

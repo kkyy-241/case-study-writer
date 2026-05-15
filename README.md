@@ -25,11 +25,19 @@ scripts/
   write_pdf.py
 outputs/
   .gitkeep
+examples/
+  generated/
 supporting_documents/
   background/
   examples/
   methodology/
 ```
+
+## Example Outputs
+
+Sample generated PDFs are committed under `examples/generated/` to show the repository's output style.
+
+Runtime outputs are written to `outputs/` and are ignored by Git by default, including generated DOCX and PDF files.
 
 ## Source Material Policy
 

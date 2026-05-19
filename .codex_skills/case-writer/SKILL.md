@@ -80,6 +80,7 @@ Do not create charts, diagrams, or synthetic images yourself. The workflow may o
 - `案例正文`不得以教师或学生为隐含读者；所有教学建议必须写入`案例使用说明`。
 - 在复审时，正文不得使用“对学生而言”、“学生可能会”、“教师应当”等隐含读者的表述；正文应保持客观叙述，教学建议仅存在于教学说明。
 - Preserve source traceability for important facts. Add source notes or citations when the background materials provide them.
+- In the narrative, place numbered source note markers as superscripts after the cited content. If the cited content ends with a quotation mark, comma, or period, place the superscript after that punctuation; if it ends with a semicolon or colon, place the superscript before that punctuation.
 - For facts from `background`, use footer-style endnotes with source file/title, publisher or website when available, and date or access date when available.
 - If background materials conflict, flag the conflict and choose the version with the stronger source, or present the uncertainty as part of the case.
 - The student-facing case must close with an open-ended decision point for classroom discussion.

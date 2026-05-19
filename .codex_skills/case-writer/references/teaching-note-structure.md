@@ -95,4 +95,4 @@ The teaching note should also proactively connect the case to broader business s
 
 ## Source Notes
 
-Use Chinese for the teaching note unless the user explicitly requests another language. For facts drawn from `background`, preserve traceability with footer-style endnotes. If true page footers are not technically available during drafting, include a clearly labeled `资料来源尾注` section and keep each note concise.
+Use Chinese for the teaching note unless the user explicitly requests another language. For facts drawn from `background`, mark numbered superscript note markers after the cited content. If the cited content ends with a quotation mark, comma, or period, place the superscript after that punctuation; if it ends with a semicolon or colon, place the superscript before that punctuation. Preserve traceability with footer-style endnotes. If true page footers are not technically available during drafting, include a clearly labeled `资料来源尾注` section and keep each note concise.

@@ -41,7 +41,7 @@
 - Ends at an open decision node.
 - Does not close with a resolved outcome, author recommendation, or teaching conclusion.
 - Includes five logically progressive finance-focused discussion questions.
-- Marks `background` facts with numbered note markers and includes footer-style source notes or a clearly labeled endnote block.
+- Marks `background` facts with numbered superscript note markers placed after cited content, with quotation marks/commas/periods before the marker and semicolons/colons after the marker. Includes footer-style source notes or a clearly labeled endnote block.
 - Preserves source traceability for any images used as evidence or exhibits.
 
 ## Teaching Note Checklist
@@ -54,7 +54,7 @@
 - Compares options where the case presents alternatives.
 - Names assumptions when calculations or conclusions depend on incomplete data.
 - Provides classroom-useful conclusions without pretending there is only one possible answer.
-- Marks `background` facts with numbered note markers and includes footer-style source notes or a clearly labeled endnote block.
+- Marks `background` facts with numbered superscript note markers placed immediately after cited content, and includes footer-style source notes or a clearly labeled endnote block.
 
 ## Red Flags To Fix
 
